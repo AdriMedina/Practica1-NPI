@@ -424,7 +424,8 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
             bool brazoIzqXOK = Math.Abs(hombroIzqX - codoIzqX - munecaIzqX - manoIzqX) < 1.2f;
 
             // Comprobar que las manos no están juntas
-            bool manosOK = Math.Abs(manoDerX - manoIzqX) > 0.2f;
+            bool manosOK = Math.Abs(manoDerX - manoIzqX) > 0.2f &&
+                Math.Abs(manoDerY - manoIzqY) > 0.2f;
 
             // Devuelve true si la posición es correcta. False si no lo está
             if (brazoDerXOK && brazoDerYOK && brazoIzqXOK && brazoIzqYOK && manosOK)
