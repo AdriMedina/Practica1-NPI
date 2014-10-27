@@ -6,6 +6,7 @@
 
 namespace Microsoft.Samples.Kinect.SkeletonBasics
 {
+    using System;
     using System.IO;
     using System.Windows;
     using System.Windows.Media;
@@ -59,7 +60,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         /// <summary>
         /// Pen used for drawing bones that are currently tracked
         /// </summary>
-        private readonly Pen trackedBonePen = new Pen(Brushes.Green, 6);
+        private readonly Pen trackedBonePen = new Pen(Brushes.Red, 6);
 
         /// <summary>
         /// Pen used for drawing bones that are currently inferred
@@ -80,6 +81,17 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         /// Drawing image that we will display
         /// </summary>
         private DrawingImage imageSource;
+
+
+        private Pen colorPosicion;
+        private Brush actual;
+
+
+
+
+
+
+
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
@@ -227,6 +239,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
 
                         if (skel.TrackingState == SkeletonTrackingState.Tracked)
                         {
+                            Movimiento5(skel);
                             this.DrawBonesAndJoints(skel, dc);
                         }
                         else if (skel.TrackingState == SkeletonTrackingState.PositionOnly)
@@ -289,11 +302,12 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
 
                 if (joint.TrackingState == JointTrackingState.Tracked)
                 {
-                    drawBrush = this.trackedJointBrush;                    
+                    //drawBrush = this.trackedJointBrush;   
+                    drawBrush = actual;
                 }
                 else if (joint.TrackingState == JointTrackingState.Inferred)
                 {
-                    drawBrush = this.inferredJointBrush;                    
+                    drawBrush = this.inferredJointBrush;   
                 }
 
                 if (drawBrush != null)
@@ -346,7 +360,8 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
             Pen drawPen = this.inferredBonePen;
             if (joint0.TrackingState == JointTrackingState.Tracked && joint1.TrackingState == JointTrackingState.Tracked)
             {
-                drawPen = this.trackedBonePen;
+                //drawPen = this.trackedBonePen;
+                drawPen = colorPosicion;
             }
 
             drawingContext.DrawLine(drawPen, this.SkeletonPointToScreen(joint0.Position), this.SkeletonPointToScreen(joint1.Position));
@@ -371,5 +386,78 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
                 }
             }
         }
+
+        // -----------------------------------------------------------------------------
+
+        // Controla que los brazos estén en la posición correcta
+        private bool posBrazosOK(Skeleton skele)
+        {
+
+            // Coordenadas actuales del brazo derecho
+            float hombroDerY = skele.Joints[JointType.ShoulderRight].Position.Y;
+            float hombroDerX = skele.Joints[JointType.ShoulderRight].Position.X;
+            float codoDerY = skele.Joints[JointType.ElbowRight].Position.Y;
+            float codoDerX = skele.Joints[JointType.ElbowRight].Position.X;
+            float munecaDerY = skele.Joints[JointType.WristRight].Position.Y;
+            float munecaDerX = skele.Joints[JointType.WristRight].Position.X;
+            float manoDerY = skele.Joints[JointType.HandRight].Position.Y;
+            float manoDerX = skele.Joints[JointType.HandRight].Position.X;
+
+            // Coordenadas actuales del brazo izquierdo
+            float hombroIzqY = skele.Joints[JointType.ShoulderLeft].Position.Y;
+            float hombroIzqX = skele.Joints[JointType.ShoulderLeft].Position.X;
+            float codoIzqY = skele.Joints[JointType.ElbowLeft].Position.Y;
+            float codoIzqX = skele.Joints[JointType.ElbowLeft].Position.X;
+            float munecaIzqY = skele.Joints[JointType.WristLeft].Position.Y;
+            float munecaIzqX = skele.Joints[JointType.WristLeft].Position.X;
+            float manoIzqY = skele.Joints[JointType.HandLeft].Position.Y;
+            float manoIzqX = skele.Joints[JointType.HandLeft].Position.X;
+
+            // Coordenadas del eje Y del brazo derecho en posición correcta
+            bool brazoDerYOK = hombroDerY < codoDerY && hombroDerY < munecaDerY && hombroDerY < manoDerY &&
+                codoDerY < munecaDerY && codoDerY < manoDerY &&
+                munecaDerY < manoDerY;
+
+            // Coordenadas del eje Y del brazo izquierdo en posición correcta
+            bool brazoIzqYOK = hombroIzqY < codoIzqY && hombroIzqY < munecaIzqY && hombroIzqY < manoIzqY &&
+                codoIzqY < munecaIzqY && codoIzqY < manoIzqY &&
+                munecaIzqY < manoIzqY;
+
+            // Coordenadas del eje X del brazo derecho en posición correcta
+            bool brazoDerXOK = Math.Abs(hombroDerX - codoDerX - munecaDerX - manoDerX) < 1;
+
+            // Coordenadas del eje X del brazo izquierdo en posición correcta
+            bool brazoIzqXOK = Math.Abs(hombroIzqX - codoIzqX - munecaIzqX - manoIzqX) < 1;
+
+
+            // Devuelve true si la posición es correcta. False si no lo está
+            if (brazoDerXOK && brazoDerYOK && brazoIzqXOK && brazoIzqYOK)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        // Se encarga de controlar el movimiento número 5
+        private void Movimiento5(Skeleton skele)
+        {
+
+            //if (skele.Joints[JointType.ShoulderRight].Position.Y < skele.Joints[JointType.ElbowRight].Position.Y)
+            if (posBrazosOK(skele))
+            {
+                colorPosicion = new Pen(Brushes.Green, 6);
+                actual = Brushes.Green;
+            }
+            else
+            {
+                colorPosicion = new Pen(Brushes.Red, 6);
+                actual = Brushes.Red;
+            }
+
+        }
+
     }
 }
