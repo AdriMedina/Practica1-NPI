@@ -82,15 +82,9 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         /// </summary>
         private DrawingImage imageSource;
 
-
+        // Pinceles para los puntos y huesos del esqueleto cuando la posición esté correcta
         private Pen colorPosicion;
         private Brush actual;
-
-
-
-
-
-
 
 
         /// <summary>
@@ -424,14 +418,16 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
                 munecaIzqY < manoIzqY;
 
             // Coordenadas del eje X del brazo derecho en posición correcta
-            bool brazoDerXOK = Math.Abs(hombroDerX - codoDerX - munecaDerX - manoDerX) < 1;
+            bool brazoDerXOK = Math.Abs(hombroDerX - codoDerX - munecaDerX - manoDerX) < 1.2f;
 
             // Coordenadas del eje X del brazo izquierdo en posición correcta
-            bool brazoIzqXOK = Math.Abs(hombroIzqX - codoIzqX - munecaIzqX - manoIzqX) < 1;
+            bool brazoIzqXOK = Math.Abs(hombroIzqX - codoIzqX - munecaIzqX - manoIzqX) < 1.2f;
 
+            // Comprobar que las manos no están juntas
+            bool manosOK = Math.Abs(manoDerX - manoIzqX) > 0.2f;
 
             // Devuelve true si la posición es correcta. False si no lo está
-            if (brazoDerXOK && brazoDerYOK && brazoIzqXOK && brazoIzqYOK)
+            if (brazoDerXOK && brazoDerYOK && brazoIzqXOK && brazoIzqYOK && manosOK)
             {
                 return true;
             }
