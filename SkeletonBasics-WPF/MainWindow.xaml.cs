@@ -83,8 +83,8 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         private DrawingImage imageSource;
 
         // Pinceles para los puntos y huesos del esqueleto cuando la posición esté correcta
-        private Pen colorPosicion;
-        private Brush actual;
+        private Pen huesosPos;
+        private Brush puntosPos;
 
 
         /// <summary>
@@ -297,7 +297,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
                 if (joint.TrackingState == JointTrackingState.Tracked)
                 {
                     //drawBrush = this.trackedJointBrush;   
-                    drawBrush = actual;
+                    drawBrush = puntosPos;
                 }
                 else if (joint.TrackingState == JointTrackingState.Inferred)
                 {
@@ -355,7 +355,7 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
             if (joint0.TrackingState == JointTrackingState.Tracked && joint1.TrackingState == JointTrackingState.Tracked)
             {
                 //drawPen = this.trackedBonePen;
-                drawPen = colorPosicion;
+                drawPen = huesosPos;
             }
 
             drawingContext.DrawLine(drawPen, this.SkeletonPointToScreen(joint0.Position), this.SkeletonPointToScreen(joint1.Position));
@@ -383,75 +383,235 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
 
         // -----------------------------------------------------------------------------
 
-        // Controla que los brazos estén en la posición correcta
-        private bool posBrazosOK(Skeleton skele)
+
+        // Comprueba si el brazo derecho está en la posición correcta
+        private bool brazoDerOK(Skeleton skele)
         {
-
             // Coordenadas actuales del brazo derecho
-            float hombroDerY = skele.Joints[JointType.ShoulderRight].Position.Y;
             float hombroDerX = skele.Joints[JointType.ShoulderRight].Position.X;
-            float codoDerY = skele.Joints[JointType.ElbowRight].Position.Y;
-            float codoDerX = skele.Joints[JointType.ElbowRight].Position.X;
-            float munecaDerY = skele.Joints[JointType.WristRight].Position.Y;
-            float munecaDerX = skele.Joints[JointType.WristRight].Position.X;
-            float manoDerY = skele.Joints[JointType.HandRight].Position.Y;
-            float manoDerX = skele.Joints[JointType.HandRight].Position.X;
+            float hombroDerY = skele.Joints[JointType.ShoulderRight].Position.Y;
 
-            // Coordenadas actuales del brazo izquierdo
-            float hombroIzqY = skele.Joints[JointType.ShoulderLeft].Position.Y;
-            float hombroIzqX = skele.Joints[JointType.ShoulderLeft].Position.X;
-            float codoIzqY = skele.Joints[JointType.ElbowLeft].Position.Y;
-            float codoIzqX = skele.Joints[JointType.ElbowLeft].Position.X;
-            float munecaIzqY = skele.Joints[JointType.WristLeft].Position.Y;
-            float munecaIzqX = skele.Joints[JointType.WristLeft].Position.X;
-            float manoIzqY = skele.Joints[JointType.HandLeft].Position.Y;
-            float manoIzqX = skele.Joints[JointType.HandLeft].Position.X;
+            float codoDerX = skele.Joints[JointType.ElbowRight].Position.X;
+            float codoDerY = skele.Joints[JointType.ElbowRight].Position.Y;
+
+            float munecaDerX = skele.Joints[JointType.WristRight].Position.X;
+            float munecaDerY = skele.Joints[JointType.WristRight].Position.Y;
+
+            float manoDerX = skele.Joints[JointType.HandRight].Position.X;
+            float manoDerY = skele.Joints[JointType.HandRight].Position.Y;
 
             // Coordenadas del eje Y del brazo derecho en posición correcta
             bool brazoDerYOK = hombroDerY < codoDerY && hombroDerY < munecaDerY && hombroDerY < manoDerY &&
                 codoDerY < munecaDerY && codoDerY < manoDerY &&
                 munecaDerY < manoDerY;
 
+            // Coordenadas del eje X del brazo derecho en posición correcta
+            bool brazoDerXOK = Math.Abs(hombroDerX - codoDerX - munecaDerX - manoDerX) < 1.2f;
+
+
+            // Devolvemos true si el brazo está en la posición correcta
+            return brazoDerXOK && brazoDerYOK;
+
+        }
+
+
+        // Comprueba si el brazo derecho está en la posición correcta
+        private bool brazoIzqOK(Skeleton skele)
+        {
+            // Coordenadas actuales del brazo izquierdo
+            float hombroIzqX = skele.Joints[JointType.ShoulderLeft].Position.X;
+            float hombroIzqY = skele.Joints[JointType.ShoulderLeft].Position.Y;
+
+            float codoIzqX = skele.Joints[JointType.ElbowLeft].Position.X;
+            float codoIzqY = skele.Joints[JointType.ElbowLeft].Position.Y;
+
+            float munecaIzqX = skele.Joints[JointType.WristLeft].Position.X;
+            float munecaIzqY = skele.Joints[JointType.WristLeft].Position.Y;
+
+            float manoIzqX = skele.Joints[JointType.HandLeft].Position.X;
+            float manoIzqY = skele.Joints[JointType.HandLeft].Position.Y;
+
+
             // Coordenadas del eje Y del brazo izquierdo en posición correcta
             bool brazoIzqYOK = hombroIzqY < codoIzqY && hombroIzqY < munecaIzqY && hombroIzqY < manoIzqY &&
                 codoIzqY < munecaIzqY && codoIzqY < manoIzqY &&
                 munecaIzqY < manoIzqY;
 
-            // Coordenadas del eje X del brazo derecho en posición correcta
-            bool brazoDerXOK = Math.Abs(hombroDerX - codoDerX - munecaDerX - manoDerX) < 1.2f;
-
             // Coordenadas del eje X del brazo izquierdo en posición correcta
             bool brazoIzqXOK = Math.Abs(hombroIzqX - codoIzqX - munecaIzqX - manoIzqX) < 1.2f;
 
-            // Comprobar que las manos no están juntas
-            bool manosOK = Math.Abs(manoDerX - manoIzqX) > 0.2f &&
-                Math.Abs(manoDerY - manoIzqY) > 0.2f;
 
-            // Devuelve true si la posición es correcta. False si no lo está
-            if (brazoDerXOK && brazoDerYOK && brazoIzqXOK && brazoIzqYOK && manosOK)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            // Devolvemos true si el brazo está en la posición correcta
+            return brazoIzqXOK && brazoIzqYOK;
+
         }
+
+
+        // Comprueba si el brazo derecho está adelantado
+        private bool brazoDerAdelantado(Skeleton skele)
+        {
+            // Coordenadas en el eje Z y en el eje Y del hombro, codo y muñeca
+            float hombroDerZ = skele.Joints[JointType.ShoulderRight].Position.Z;
+            float codoDerZ = skele.Joints[JointType.ElbowRight].Position.Z;
+            float munecaDerZ = skele.Joints[JointType.WristRight].Position.Z;
+
+            float hombroDerY = skele.Joints[JointType.ShoulderRight].Position.Y;
+            float codoDerY = skele.Joints[JointType.ElbowRight].Position.Y;
+            float munecaDerY = skele.Joints[JointType.WristRight].Position.Y;
+
+            // Angulos en los que consideramos que el brazo está adelantado
+            int anguloMin = 40, anguloMax = 90;
+
+            // Calculamos el angulo actual del brazo sobre el eje YZ
+            double hipotenusa = Math.Sqrt(Math.Pow((munecaDerZ - hombroDerZ), 2) + Math.Pow((munecaDerY - hombroDerY), 2));
+            double aux = Math.Cos((munecaDerY - hombroDerY) / hipotenusa);
+            int angulo_actual = 90 - (int)((Math.Acos(aux) * 180) / 3.1416);
+
+            // Comprobamos que el brazo esté al frente como minimo. Si el brazo está por debajo, se considera erroneo.
+            bool brazoZ = hombroDerZ > codoDerZ && hombroDerZ > munecaDerZ && codoDerZ > munecaDerZ;
+            bool brazoY = hombroDerY < codoDerY && hombroDerY < munecaDerY && codoDerY < munecaDerY;
+
+
+            // Si está adelantado devolvemos true.
+            if (angulo_actual > anguloMin && angulo_actual < anguloMax && brazoZ && brazoY)
+                return true;
+            else
+                return false;
+
+        }
+
+        // Comprueba si el brazo izquierdo está adelantado
+        private bool brazoIzqAdelantado(Skeleton skele)
+        {
+            // Coordenadas en el eje Z y en el eje Y del hombro, codo y muñeca
+            float hombroIzqZ = skele.Joints[JointType.ShoulderLeft].Position.Z;
+            float codoIzqZ = skele.Joints[JointType.ElbowLeft].Position.Z;
+            float munecaIzqZ = skele.Joints[JointType.WristLeft].Position.Z;
+
+            float hombroIzqY = skele.Joints[JointType.ShoulderLeft].Position.Y;
+            float codoIzqY = skele.Joints[JointType.ElbowLeft].Position.Y;
+            float munecaIzqY = skele.Joints[JointType.WristLeft].Position.Y;
+
+            // Angulos en los que consideramos que el brazo está adelantado
+            int anguloMin = 40, anguloMax = 90;
+
+            // Calculamos el angulo actual del brazo sobre el eje YZ
+            double hipotenusa = Math.Sqrt(Math.Pow((munecaIzqZ - hombroIzqZ), 2) + Math.Pow((munecaIzqY - hombroIzqY), 2));
+            double aux = Math.Cos((munecaIzqY - hombroIzqY) / hipotenusa);
+            int angulo_actual = 90 - (int)((Math.Acos(aux) * 180) / 3.1416);
+
+            // Comprobamos que el brazo esté al frente como minimo. Si el brazo está por debajo, se considera erroneo.
+            bool brazoZ = hombroIzqZ > codoIzqZ && hombroIzqZ > munecaIzqZ && codoIzqZ > munecaIzqZ;
+            bool brazoY = hombroIzqY < codoIzqY && hombroIzqY < munecaIzqY && codoIzqY < munecaIzqY;
+
+
+            // Si está adelantado devolvemos true.
+            if (angulo_actual > anguloMin && angulo_actual < anguloMax && brazoZ && brazoY)
+                return true;
+            else
+                return false;
+
+        }
+
+        // Comprueba si el brazo derecho está atrasado
+        private bool brazoDerAtrasado(Skeleton skele)
+        {
+            // Coordenadas en el eje Z y en el eje Y del hombro, codo y muñeca
+            float hombroDerZ = skele.Joints[JointType.ShoulderRight].Position.Z;
+            float codoDerZ = skele.Joints[JointType.ElbowRight].Position.Z;
+            float munecaDerZ = skele.Joints[JointType.WristRight].Position.Z;
+
+            float hombroDerY = skele.Joints[JointType.ShoulderRight].Position.Y;
+            float codoDerY = skele.Joints[JointType.ElbowRight].Position.Y;
+            float munecaDerY = skele.Joints[JointType.WristRight].Position.Y;
+
+            // Angulos en los que consideramos que el brazo está adelantado
+            int anguloMin = 270, anguloMax = 345;
+
+            // Calculamos el angulo actual del brazo sobre el eje YZ
+            double hipotenusa = Math.Sqrt(Math.Pow((munecaDerZ - hombroDerZ), 2) + Math.Pow((munecaDerY - hombroDerY), 2));
+            double aux = Math.Cos((munecaDerY - hombroDerY) / hipotenusa);
+            int angulo_actual = 90 - (int)((Math.Acos(aux) * 180) / 3.1416);
+
+            // Comprobamos que el brazo esté al frente como minimo. Si el brazo está por debajo, se considera erroneo.
+            bool brazoZ = hombroDerZ < codoDerZ && hombroDerZ < munecaDerZ && codoDerZ < munecaDerZ;
+            bool brazoY = hombroDerY < codoDerY && hombroDerY < munecaDerY && codoDerY < munecaDerY;
+
+
+            // Si está adelantado devolvemos true.
+            if (angulo_actual > anguloMin && angulo_actual < anguloMax && brazoZ && brazoY)
+                return true;
+            else
+                return false;
+        }
+
+        // Comprueba si el brazo izquierdo está atrasado
+        private bool brazoIzqAtrasado(Skeleton skele)
+        {
+            // Coordenadas en el eje Z y en el eje Y del hombro, codo y muñeca
+            float hombroIzqZ = skele.Joints[JointType.ShoulderLeft].Position.Z;
+            float codoIzqZ = skele.Joints[JointType.ElbowLeft].Position.Z;
+            float munecaIzqZ = skele.Joints[JointType.WristLeft].Position.Z;
+
+            float hombroIzqY = skele.Joints[JointType.ShoulderLeft].Position.Y;
+            float codoIzqY = skele.Joints[JointType.ElbowLeft].Position.Y;
+            float munecaIzqY = skele.Joints[JointType.WristLeft].Position.Y;
+
+            // Angulos en los que consideramos que el brazo está adelantado
+            int anguloMin = 270, anguloMax = 345;
+
+            // Calculamos el angulo actual del brazo sobre el eje YZ
+            double hipotenusa = Math.Sqrt(Math.Pow((munecaIzqZ - hombroIzqZ), 2) + Math.Pow((munecaIzqY - hombroIzqY), 2));
+            double aux = Math.Cos((munecaIzqY - hombroIzqY) / hipotenusa);
+            int angulo_actual = 90 - (int)((Math.Acos(aux) * 180) / 3.1416);
+
+            // Comprobamos que el brazo esté al frente como minimo. Si el brazo está por debajo, se considera erroneo.
+            bool brazoZ = hombroIzqZ < codoIzqZ && hombroIzqZ < munecaIzqZ && codoIzqZ < munecaIzqZ;
+            bool brazoY = hombroIzqY < codoIzqY && hombroIzqY < munecaIzqY && codoIzqY < munecaIzqY;
+
+
+            // Si está adelantado devolvemos true.
+            if (angulo_actual > anguloMin && angulo_actual < anguloMax && brazoZ && brazoY)
+                return true;
+            else
+                return false;
+        }
+
+        // Controla que las manos estén separadas. 
+        private bool manosSeparadas(Skeleton skele)
+        {
+            float munecaDerX = skele.Joints[JointType.WristRight].Position.X;
+            float munecaIzqX = skele.Joints[JointType.WristLeft].Position.X;
+
+            return Math.Abs(munecaDerX - munecaIzqX) >= 0.2f;
+
+        }
+
+
+
 
         // Se encarga de controlar el movimiento número 5
         private void Movimiento5(Skeleton skele)
         {
-
-            //if (skele.Joints[JointType.ShoulderRight].Position.Y < skele.Joints[JointType.ElbowRight].Position.Y)
-            if (posBrazosOK(skele))
+            if (brazoDerAdelantado(skele) || brazoIzqAdelantado(skele))
             {
-                colorPosicion = new Pen(Brushes.Green, 6);
-                actual = Brushes.Green;
+                huesosPos = new Pen(Brushes.Turquoise, 6);
+                puntosPos = Brushes.Turquoise;
+            }
+            else if (brazoDerAtrasado(skele) || brazoIzqAtrasado(skele))
+            {
+                huesosPos = new Pen(Brushes.Yellow, 6);
+                puntosPos = Brushes.Yellow;
+            }
+            else if (brazoDerOK(skele) && brazoIzqOK(skele) && manosSeparadas(skele))
+            {
+                huesosPos = new Pen(Brushes.Green, 6);
+                puntosPos = Brushes.Green;
             }
             else
             {
-                colorPosicion = new Pen(Brushes.Red, 6);
-                actual = Brushes.Red;
+                huesosPos = new Pen(Brushes.Red, 6);
+                puntosPos = Brushes.Red;
             }
 
         }
