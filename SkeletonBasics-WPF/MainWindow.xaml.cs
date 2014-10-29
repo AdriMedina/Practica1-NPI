@@ -233,8 +233,8 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
 
                         if (skel.TrackingState == SkeletonTrackingState.Tracked)
                         {
-                            Movimiento5(skel);
-                            this.DrawBonesAndJoints(skel, dc);
+                            Movimiento5(skel, dc);
+                            //this.DrawBonesAndJoints(skel, dc);
                         }
                         else if (skel.TrackingState == SkeletonTrackingState.PositionOnly)
                         {
@@ -382,6 +382,39 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         }
 
         // -----------------------------------------------------------------------------
+
+        // Pinta los huesos según el color indicado
+        private void dibujaHuesoPorColor(Skeleton skeleton, DrawingContext drawingContext, JointType jointType0, JointType jointType1, Pen h)
+        {
+            Joint joint0 = skeleton.Joints[jointType0];
+            Joint joint1 = skeleton.Joints[jointType1];
+
+            // If we can't find either of these joints, exit
+            if (joint0.TrackingState == JointTrackingState.NotTracked ||
+                joint1.TrackingState == JointTrackingState.NotTracked)
+            {
+                return;
+            }
+
+            // Don't draw if both points are inferred
+            if (joint0.TrackingState == JointTrackingState.Inferred &&
+                joint1.TrackingState == JointTrackingState.Inferred)
+            {
+                return;
+            }
+
+            // We assume all drawn bones are inferred unless BOTH joints are tracked
+            Pen drawPen = this.inferredBonePen;
+            if (joint0.TrackingState == JointTrackingState.Tracked && joint1.TrackingState == JointTrackingState.Tracked)
+            {                
+                drawPen = h;
+            }
+
+            drawingContext.DrawLine(drawPen, this.SkeletonPointToScreen(joint0.Position), this.SkeletonPointToScreen(joint1.Position));
+
+        }
+
+
 
 
         // Comprueba si el brazo derecho está en la posición correcta
@@ -588,32 +621,111 @@ namespace Microsoft.Samples.Kinect.SkeletonBasics
         }
 
 
-
-
         // Se encarga de controlar el movimiento número 5
-        private void Movimiento5(Skeleton skele)
+        private void Movimiento5(Skeleton skeleton, DrawingContext drawingContext)
         {
-            if (brazoDerAdelantado(skele) || brazoIzqAdelantado(skele))
-            {
-                huesosPos = new Pen(Brushes.Turquoise, 6);
-                puntosPos = Brushes.Turquoise;
-            }
-            else if (brazoDerAtrasado(skele) || brazoIzqAtrasado(skele))
-            {
-                huesosPos = new Pen(Brushes.Yellow, 6);
-                puntosPos = Brushes.Yellow;
-            }
-            else if (brazoDerOK(skele) && brazoIzqOK(skele) && manosSeparadas(skele))
+            // Forma auxiliar de rellenar el resto de colores del cuerpo
+            if (brazoDerOK(skeleton) && brazoIzqOK(skeleton) && manosSeparadas(skeleton))
             {
                 huesosPos = new Pen(Brushes.Green, 6);
                 puntosPos = Brushes.Green;
-            }
-            else
+            }else
             {
                 huesosPos = new Pen(Brushes.Red, 6);
                 puntosPos = Brushes.Red;
             }
 
+
+            // Render Torso
+            this.DrawBone(skeleton, drawingContext, JointType.Head, JointType.ShoulderCenter);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderLeft);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.ShoulderRight);
+            this.DrawBone(skeleton, drawingContext, JointType.ShoulderCenter, JointType.Spine);
+            this.DrawBone(skeleton, drawingContext, JointType.Spine, JointType.HipCenter);
+            this.DrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipLeft);
+            this.DrawBone(skeleton, drawingContext, JointType.HipCenter, JointType.HipRight);
+
+            // Left Arm
+            if (brazoIzqAdelantado(skeleton))
+            {
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, new Pen(Brushes.Turquoise, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, new Pen(Brushes.Turquoise, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, new Pen(Brushes.Turquoise, 6));
+            }
+            else if (brazoIzqAtrasado(skeleton))
+            {
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, new Pen(Brushes.Yellow, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, new Pen(Brushes.Yellow, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, new Pen(Brushes.Yellow, 6));
+            }
+            else if (brazoIzqOK(skeleton) && manosSeparadas(skeleton))
+            {
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, new Pen(Brushes.Green, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, new Pen(Brushes.Green, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, new Pen(Brushes.Green, 6));
+            }else{
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft, new Pen(Brushes.Red, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowLeft, JointType.WristLeft, new Pen(Brushes.Red, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristLeft, JointType.HandLeft, new Pen(Brushes.Red, 6));
+            }
+
+            // Right Arm
+            if (brazoDerAdelantado(skeleton))
+            {
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, new Pen(Brushes.Turquoise, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, new Pen(Brushes.Turquoise, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, new Pen(Brushes.Turquoise, 6));
+
+            }
+            else if (brazoDerAtrasado(skeleton))
+            {
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, new Pen(Brushes.Yellow, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, new Pen(Brushes.Yellow, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, new Pen(Brushes.Yellow, 6));
+            }
+            else if (brazoDerOK(skeleton) && manosSeparadas(skeleton))
+            {
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, new Pen(Brushes.Green, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, new Pen(Brushes.Green, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, new Pen(Brushes.Green, 6));
+            }
+            else
+            {
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight, new Pen(Brushes.Red, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight, new Pen(Brushes.Red, 6));
+                this.dibujaHuesoPorColor(skeleton, drawingContext, JointType.WristRight, JointType.HandRight, new Pen(Brushes.Red, 6));
+            }
+
+            // Left Leg
+            this.DrawBone(skeleton, drawingContext, JointType.HipLeft, JointType.KneeLeft);
+            this.DrawBone(skeleton, drawingContext, JointType.KneeLeft, JointType.AnkleLeft);
+            this.DrawBone(skeleton, drawingContext, JointType.AnkleLeft, JointType.FootLeft);
+
+            // Right Leg
+            this.DrawBone(skeleton, drawingContext, JointType.HipRight, JointType.KneeRight);
+            this.DrawBone(skeleton, drawingContext, JointType.KneeRight, JointType.AnkleRight);
+            this.DrawBone(skeleton, drawingContext, JointType.AnkleRight, JointType.FootRight);
+
+            // Render Joints
+            foreach (Joint joint in skeleton.Joints)
+            {
+                Brush drawBrush = null;
+
+                if (joint.TrackingState == JointTrackingState.Tracked)
+                {
+                    //drawBrush = this.trackedJointBrush;   
+                    drawBrush = puntosPos;
+                }
+                else if (joint.TrackingState == JointTrackingState.Inferred)
+                {
+                    drawBrush = this.inferredJointBrush;
+                }
+
+                if (drawBrush != null)
+                {
+                    drawingContext.DrawEllipse(drawBrush, null, this.SkeletonPointToScreen(joint.Position), JointThickness, JointThickness);
+                }
+            }
         }
 
     }
